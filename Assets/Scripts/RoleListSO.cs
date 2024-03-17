@@ -11,6 +11,6 @@ public class RoleListSO : ScriptableObject
 [Serializable]
 public struct RolesAndStates
 {
-    public Role role;
-    public bool isGiven;
+    public Faction faction;
+    public Roles role;
 }
