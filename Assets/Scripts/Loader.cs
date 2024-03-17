@@ -10,6 +10,8 @@ public static class Loader
     {
         GameScene,
         LoadingScene,
+        MainMenuScene,
+        CharacterSelectScene
     }
 
     public static int targetSceneIndex;
