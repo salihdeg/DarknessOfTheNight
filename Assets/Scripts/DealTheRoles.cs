@@ -2,10 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public enum Role
+public class DealTheRoles : MonoBehaviour
 {
-    Villager,
-    Killer,
-    Priest,
-    Rogue
+    
 }

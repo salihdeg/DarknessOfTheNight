@@ -36,18 +36,23 @@ namespace Player
         [SerializeField] private float _topClamp = 89.0f;
         [SerializeField] private float _bottomClamp = -89.0f;
 
-        // cinemachine
+        // Cinemachine
         private float _cinemachineTargetPitch;
 
-        // player
+        // Player
         private float _speed;
         private float _rotationVelocity;
         private float _verticalVelocity;
         private float _terminalVelocity = 53.0f;
 
-        // timeout deltatime
+        // Timeout deltatime
         private float _jumpTimeoutDelta;
         private float _fallTimeoutDelta;
+
+        // Animation Status
+        private float _animationMoveSpeed;
+        private bool _isJumping;
+        private bool _isFreeFall;
 
         private CinemachineVirtualCamera _cinemachineVirtualCamera;
         private PlayerInput _playerInput;
@@ -111,7 +116,6 @@ namespace Player
             // Set sphere position, with offset
             Vector3 spherePosition = new Vector3(transform.position.x, transform.position.y - _groundedOffset, transform.position.z);
             _grounded = Physics.CheckSphere(spherePosition, _groundedRadius, GroundLayers, QueryTriggerInteraction.Ignore);
-            Debug.Log("_grounded: " + _grounded);
         }
 
         private void CameraRotation()
@@ -146,9 +150,13 @@ namespace Player
             // note: Vector2's == operator uses approximation so is not floating point error prone, and is cheaper than magnitude
             // if there is no input, set the target speed to 0
             Vector2 moveInput = GameInput.Instance.GetMovementVectorNormalized();
-            if (moveInput == Vector2.zero) targetSpeed = 0.0f;
-            _animator.SetFloat("Speed", targetSpeed);
-            Debug.Log("magnitude: " + moveInput.magnitude);
+            if (moveInput == Vector2.zero)
+                targetSpeed = 0.0f;
+
+            _animationMoveSpeed = targetSpeed;
+
+            if (moveInput.y < 0f)
+                _animationMoveSpeed = -targetSpeed;
 
             // a reference to the players current horizontal velocity
             float currentHorizontalSpeed = new Vector3(_controller.velocity.x, 0.0f, _controller.velocity.z).magnitude;
@@ -194,6 +202,9 @@ namespace Player
                 // reset the fall timeout timer
                 _fallTimeoutDelta = fallTimeout;
 
+                _isJumping = false;
+                _isFreeFall = false;
+
                 // stop our velocity dropping infinitely when grounded
                 if (_verticalVelocity < 0.0f)
                 {
@@ -205,6 +216,8 @@ namespace Player
                 {
                     // the square root of H * -2 * G = how much velocity needed to reach desired height
                     _verticalVelocity = Mathf.Sqrt(_jumpHeight * -2f * gravity);
+
+                    _isJumping = true;
                 }
 
                 // jump timeout
@@ -222,6 +235,10 @@ namespace Player
                 if (_fallTimeoutDelta >= 0.0f)
                 {
                     _fallTimeoutDelta -= Time.deltaTime;
+                }
+                else
+                {
+                    _isFreeFall = true;
                 }
 
                 // if we are not grounded, do not jump
@@ -252,6 +269,26 @@ namespace Player
 
             // when selected, draw a gizmo in the position of, and matching radius of, the grounded collider
             Gizmos.DrawSphere(new Vector3(transform.position.x, transform.position.y - _groundedOffset, transform.position.z), _groundedRadius);
+        }
+
+        public bool IsGrounded()
+        {
+            return _grounded;
+        }
+
+        public bool IsJumping()
+        {
+            return _isJumping;
+        }
+
+        public bool IsFreeFall()
+        {
+            return _isFreeFall;
+        }
+
+        public float GetSpeed()
+        {
+            return _animationMoveSpeed;
         }
     }
 }
