@@ -14,6 +14,7 @@ public class LobbyListUI : MonoBehaviour
     [SerializeField] private TMP_InputField code;
     private void Awake()
     {
+        Instance = this;
         backButton.onClick.AddListener(() =>
         {
             Hide();
