@@ -4762,6 +4762,7 @@ MonoBehaviour:
   lobbyName: {fileID: 541136141}
   createPrivate: {fileID: 2116794606}
   createPublic: {fileID: 628883172}
+  backButton: {fileID: 965955735}
 --- !u!1 &2085424341
 GameObject:
   m_ObjectHideFlags: 0

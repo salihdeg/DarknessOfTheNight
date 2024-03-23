@@ -204,7 +204,7 @@ namespace Network
                 // TODO:
                 MultiplayerManager.Instance.StartHost();
                 // TODO: Sahne sýrasý ve dizayný konuþulduktan sonra düzenlenecek!!!
-                //Loader.LoadNetwork(Loader.Scene.CharacterSelectScene);
+                Loader.LoadNetwork(Loader.Scene.CharacterSelectScene);
             }
             catch (LobbyServiceException e)
             {
