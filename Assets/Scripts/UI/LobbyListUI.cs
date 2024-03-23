@@ -8,6 +8,7 @@ using UI;
 
 public class LobbyListUI : MonoBehaviour
 {
+    public static LobbyListUI Instance { get; private set; }
     [SerializeField] private Button backButton, joinLobbyWithCodeButton;
     [SerializeField] Transform lobbyContainer, lobbyTemplate;
     [SerializeField] private TMP_InputField code;
