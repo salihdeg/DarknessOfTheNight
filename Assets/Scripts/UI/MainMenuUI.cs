@@ -22,7 +22,8 @@ namespace UI
             });
             joinLobby.onClick.AddListener(() =>
             {
-
+                Hide();
+                LobbyListUI.Instance.Show();
             });
             options.onClick.AddListener(() =>
             {
