@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using Unity.Netcode;
 using Unity.Services.Authentication;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 
 public class MultiplayerManager : NetworkBehaviour
 {
@@ -53,8 +52,8 @@ public class MultiplayerManager : NetworkBehaviour
         // For UI
         OnTryingToJoinGame?.Invoke(this, System.EventArgs.Empty);
 
-        NetworkManager.Singleton.OnClientDisconnectCallback += NetworkManager_Client_OnClientDisconnectCallback;
         NetworkManager.Singleton.OnClientConnectedCallback += NetworkManager_Client_OnClientConnectedCallback;
+        NetworkManager.Singleton.OnClientDisconnectCallback += NetworkManager_Client_OnClientDisconnectCallback;
         NetworkManager.Singleton.StartClient();
     }
 
@@ -62,10 +61,11 @@ public class MultiplayerManager : NetworkBehaviour
     // assing a color, set player name and id
     private void NetworkManager_OnClientConnectedCallback(ulong clientId)
     {
+        Debug.Log("Player Connected: " + clientId);
         _playerDataNetworkList.Add(new PlayerData
         {
             clientId = clientId,
-            //colorId = GetFirstUnusedColorId(),
+            colorId = GetFirstUnusedColorId(),
         });
 
         SetPlayerNameServerRpc(GetPlayerName());
@@ -237,5 +237,10 @@ public class MultiplayerManager : NetworkBehaviour
             }
         }
         return -1;
+    }
+
+    public NetworkList<PlayerData> GetPlayerDataNetworkList()
+    {
+        return _playerDataNetworkList;
     }
 }
