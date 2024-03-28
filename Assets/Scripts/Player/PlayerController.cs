@@ -1,12 +1,11 @@
 using Cinemachine;
+using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.InputSystem;
-using UnityEngine.Rendering;
-using UnityEngine.Windows;
 
 namespace Player
 {
-    public class PlayerController : MonoBehaviour
+    public class PlayerController : NetworkBehaviour
     {
         [Header("Player")]
         public float moveSpeed = 4.0f;
@@ -36,18 +35,23 @@ namespace Player
         [SerializeField] private float _topClamp = 89.0f;
         [SerializeField] private float _bottomClamp = -89.0f;
 
-        // cinemachine
+        // Cinemachine
         private float _cinemachineTargetPitch;
 
-        // player
+        // Player
         private float _speed;
         private float _rotationVelocity;
         private float _verticalVelocity;
         private float _terminalVelocity = 53.0f;
 
-        // timeout deltatime
+        // Timeout deltatime
         private float _jumpTimeoutDelta;
         private float _fallTimeoutDelta;
+
+        // Animation Status
+        private float _animationMoveSpeed;
+        private bool _isJumping;
+        private bool _isFreeFall;
 
         private CinemachineVirtualCamera _cinemachineVirtualCamera;
         private PlayerInput _playerInput;
@@ -67,36 +71,43 @@ namespace Player
 
         private void Awake()
         {
+            _animator = GetComponentInChildren<Animator>();
+
             if (_mainCamera == null)
             {
                 _mainCamera = GameObject.FindGameObjectWithTag("MainCamera");
             }
             _cinemachineVirtualCamera = FindObjectOfType<CinemachineVirtualCamera>();
-            _animator = GetComponentInChildren<Animator>();
         }
 
         private void Start()
         {
             _controller = GetComponent<CharacterController>();
             _playerInput = GetComponent<PlayerInput>();
-            _cinemachineVirtualCamera.Follow = cinemachineCameraTarget.transform;
 
             // reset our timeouts on start
             _jumpTimeoutDelta = jumpTimeout;
             _fallTimeoutDelta = fallTimeout;
+
+            if (!IsOwner) return;
+            _playerInput.enabled = true;
+            _cinemachineVirtualCamera.Follow = cinemachineCameraTarget.transform;
         }
 
         private void Update()
         {
-            JumpAndGravity();
+            if (!IsOwner) return;
             _grounded = _controller.isGrounded;
-            //GroundedCheck();
+            JumpAndGravity();
             Move();
+            //SetMoveAnimationSpeed();
+            //GroundedCheck();
             //Debug.Log(IsSprint);
         }
 
         private void LateUpdate()
         {
+            if (!IsOwner) return;
             CameraRotation();
         }
 
@@ -111,7 +122,6 @@ namespace Player
             // Set sphere position, with offset
             Vector3 spherePosition = new Vector3(transform.position.x, transform.position.y - _groundedOffset, transform.position.z);
             _grounded = Physics.CheckSphere(spherePosition, _groundedRadius, GroundLayers, QueryTriggerInteraction.Ignore);
-            Debug.Log("_grounded: " + _grounded);
         }
 
         private void CameraRotation()
@@ -138,17 +148,14 @@ namespace Player
         private void Move()
         {
             // set target speed based on move speed, sprint speed and if sprint is pressed
-            float targetSpeed = GameInput.Instance.IsSprint() ? sprintSpeed : moveSpeed;
+            Vector2 moveInput = GameInput.Instance.GetMovementVectorNormalized();
+            float targetSpeed = SetMoveAnimationSpeed();
             //float targetSpeed = moveSpeed;
 
             // a simplistic acceleration and deceleration designed to be easy to remove, replace, or iterate upon
 
             // note: Vector2's == operator uses approximation so is not floating point error prone, and is cheaper than magnitude
             // if there is no input, set the target speed to 0
-            Vector2 moveInput = GameInput.Instance.GetMovementVectorNormalized();
-            if (moveInput == Vector2.zero) targetSpeed = 0.0f;
-            _animator.SetFloat("Speed", targetSpeed);
-            Debug.Log("magnitude: " + moveInput.magnitude);
 
             // a reference to the players current horizontal velocity
             float currentHorizontalSpeed = new Vector3(_controller.velocity.x, 0.0f, _controller.velocity.z).magnitude;
@@ -194,6 +201,9 @@ namespace Player
                 // reset the fall timeout timer
                 _fallTimeoutDelta = fallTimeout;
 
+                _isJumping = false;
+                _isFreeFall = false;
+
                 // stop our velocity dropping infinitely when grounded
                 if (_verticalVelocity < 0.0f)
                 {
@@ -205,6 +215,8 @@ namespace Player
                 {
                     // the square root of H * -2 * G = how much velocity needed to reach desired height
                     _verticalVelocity = Mathf.Sqrt(_jumpHeight * -2f * gravity);
+
+                    _isJumping = true;
                 }
 
                 // jump timeout
@@ -222,6 +234,10 @@ namespace Player
                 if (_fallTimeoutDelta >= 0.0f)
                 {
                     _fallTimeoutDelta -= Time.deltaTime;
+                }
+                else
+                {
+                    _isFreeFall = true;
                 }
 
                 // if we are not grounded, do not jump
@@ -252,6 +268,42 @@ namespace Player
 
             // when selected, draw a gizmo in the position of, and matching radius of, the grounded collider
             Gizmos.DrawSphere(new Vector3(transform.position.x, transform.position.y - _groundedOffset, transform.position.z), _groundedRadius);
+        }
+
+        private float SetMoveAnimationSpeed()
+        {
+            float targetSpeed = GameInput.Instance.IsSprint() ? sprintSpeed : moveSpeed;
+
+            Vector2 moveInput = GameInput.Instance.GetMovementVectorNormalized();
+            if (moveInput == Vector2.zero)
+                targetSpeed = 0.0f;
+
+            _animationMoveSpeed = targetSpeed;
+
+            if (moveInput.y < 0f)
+                _animationMoveSpeed = -targetSpeed;
+
+            return targetSpeed;
+        }
+
+        public bool IsGrounded()
+        {
+            return _grounded;
+        }
+
+        public bool IsJumping()
+        {
+            return _isJumping;
+        }
+
+        public bool IsFreeFall()
+        {
+            return _isFreeFall;
+        }
+
+        public float GetSpeed()
+        {
+            return _animationMoveSpeed;
         }
     }
 }

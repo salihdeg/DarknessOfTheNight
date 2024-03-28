@@ -13,23 +13,9 @@ MonoBehaviour:
   m_Name: RolesList
   m_EditorClassIdentifier: 
   rolesAndStates:
-  - role: 1
-    isGiven: 1
-  - role: 2
-    isGiven: 1
-  - role: 3
-    isGiven: 1
-  - role: 0
-    isGiven: 0
-  - role: 0
-    isGiven: 0
-  - role: 0
-    isGiven: 0
-  - role: 0
-    isGiven: 0
-  - role: 0
-    isGiven: 0
-  - role: 0
-    isGiven: 0
-  - role: 0
-    isGiven: 0
+  - faction: 0
+    role: 1
+  - faction: 1
+    role: 0
+  - faction: 1
+    role: 2
