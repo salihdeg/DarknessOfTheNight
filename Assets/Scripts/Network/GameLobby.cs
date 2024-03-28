@@ -225,7 +225,7 @@ namespace Network
                 JoinAllocation joinAllocation = await JoinRelay(relayJoinCode);
                 NetworkManager.Singleton.GetComponent<UnityTransport>().SetRelayServerData(new RelayServerData(joinAllocation, "dtls"));
 
-                //MultiplayerManager.Instance.StartClient();
+                MultiplayerManager.Instance.StartClient();
             }
             catch (LobbyServiceException e)
             {
@@ -245,7 +245,7 @@ namespace Network
 
                 JoinAllocation joinAllocation = await JoinRelay(relayJoinCode);
                 NetworkManager.Singleton.GetComponent<UnityTransport>().SetRelayServerData(new RelayServerData(joinAllocation, "dtls"));
-                //MultiplayerManager.Instance.StartClient();
+                MultiplayerManager.Instance.StartClient();
             }
             catch (LobbyServiceException e)
             {
@@ -265,7 +265,7 @@ namespace Network
 
                 JoinAllocation joinAllocation = await JoinRelay(relayJoinCode);
                 NetworkManager.Singleton.GetComponent<UnityTransport>().SetRelayServerData(new RelayServerData(joinAllocation, "dtls"));
-                //MultiplayerManager.Instance.StartClient();
+                MultiplayerManager.Instance.StartClient();
             }
             catch (LobbyServiceException e)
             {
