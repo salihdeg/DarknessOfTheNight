@@ -28,6 +28,8 @@ public class LobbyListUI : MonoBehaviour
     private void Start()
     {
         GameLobby.Instance.OnLobbyListChanged += GameLobby_OnLobbyListChanged;
+
+        lobbyTemplate.gameObject.SetActive(false);
         Hide();
     }
 
