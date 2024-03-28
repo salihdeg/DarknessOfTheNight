@@ -1,9 +1,8 @@
-﻿using UnityEngine;
-
-public class Killer : Role<ITratior>
+﻿public class Killer : Role<ITratior>
 {
-    private void Start()
+    internal override void Start()
     {
-        DebugRoleName(myRole.ToString());
+        role = Roles.Killer;
+        base.Start();
     }
 }
