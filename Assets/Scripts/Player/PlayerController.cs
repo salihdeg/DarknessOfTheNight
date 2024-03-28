@@ -1,12 +1,11 @@
 using Cinemachine;
+using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.InputSystem;
-using UnityEngine.Rendering;
-using UnityEngine.Windows;
 
 namespace Player
 {
-    public class PlayerController : MonoBehaviour
+    public class PlayerController : NetworkBehaviour
     {
         [Header("Player")]
         public float moveSpeed = 4.0f;
@@ -72,36 +71,43 @@ namespace Player
 
         private void Awake()
         {
+            _animator = GetComponentInChildren<Animator>();
+
             if (_mainCamera == null)
             {
                 _mainCamera = GameObject.FindGameObjectWithTag("MainCamera");
             }
             _cinemachineVirtualCamera = FindObjectOfType<CinemachineVirtualCamera>();
-            _animator = GetComponentInChildren<Animator>();
         }
 
         private void Start()
         {
             _controller = GetComponent<CharacterController>();
             _playerInput = GetComponent<PlayerInput>();
-            _cinemachineVirtualCamera.Follow = cinemachineCameraTarget.transform;
 
             // reset our timeouts on start
             _jumpTimeoutDelta = jumpTimeout;
             _fallTimeoutDelta = fallTimeout;
+
+            if (!IsOwner) return;
+            _playerInput.enabled = true;
+            _cinemachineVirtualCamera.Follow = cinemachineCameraTarget.transform;
         }
 
         private void Update()
         {
-            JumpAndGravity();
+            if (!IsOwner) return;
             _grounded = _controller.isGrounded;
-            //GroundedCheck();
+            JumpAndGravity();
             Move();
+            //SetMoveAnimationSpeed();
+            //GroundedCheck();
             //Debug.Log(IsSprint);
         }
 
         private void LateUpdate()
         {
+            if (!IsOwner) return;
             CameraRotation();
         }
 
@@ -142,21 +148,14 @@ namespace Player
         private void Move()
         {
             // set target speed based on move speed, sprint speed and if sprint is pressed
-            float targetSpeed = GameInput.Instance.IsSprint() ? sprintSpeed : moveSpeed;
+            Vector2 moveInput = GameInput.Instance.GetMovementVectorNormalized();
+            float targetSpeed = SetMoveAnimationSpeed();
             //float targetSpeed = moveSpeed;
 
             // a simplistic acceleration and deceleration designed to be easy to remove, replace, or iterate upon
 
             // note: Vector2's == operator uses approximation so is not floating point error prone, and is cheaper than magnitude
             // if there is no input, set the target speed to 0
-            Vector2 moveInput = GameInput.Instance.GetMovementVectorNormalized();
-            if (moveInput == Vector2.zero)
-                targetSpeed = 0.0f;
-
-            _animationMoveSpeed = targetSpeed;
-
-            if (moveInput.y < 0f)
-                _animationMoveSpeed = -targetSpeed;
 
             // a reference to the players current horizontal velocity
             float currentHorizontalSpeed = new Vector3(_controller.velocity.x, 0.0f, _controller.velocity.z).magnitude;
@@ -269,6 +268,22 @@ namespace Player
 
             // when selected, draw a gizmo in the position of, and matching radius of, the grounded collider
             Gizmos.DrawSphere(new Vector3(transform.position.x, transform.position.y - _groundedOffset, transform.position.z), _groundedRadius);
+        }
+
+        private float SetMoveAnimationSpeed()
+        {
+            float targetSpeed = GameInput.Instance.IsSprint() ? sprintSpeed : moveSpeed;
+
+            Vector2 moveInput = GameInput.Instance.GetMovementVectorNormalized();
+            if (moveInput == Vector2.zero)
+                targetSpeed = 0.0f;
+
+            _animationMoveSpeed = targetSpeed;
+
+            if (moveInput.y < 0f)
+                _animationMoveSpeed = -targetSpeed;
+
+            return targetSpeed;
         }
 
         public bool IsGrounded()
